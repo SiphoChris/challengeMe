@@ -1,6 +1,10 @@
 import path from "node:path";
 import { connection as db } from "../config/index.js";
 
+function getHomePage(_req, res) {
+  res.sendFile(path.resolve("./static/html/index.html"));
+}
+
 function getUsers(_req, res) {
   try {
     const strQry = `
@@ -101,22 +105,16 @@ function deleteUser(req, res) {
 }
 
 function getProducts(_req, res) {
-  res.sendFile(path.resolve("./static/html/products.html"));
-}
-
-function getProduct(req, res) {
   try {
-    let productID = +req.params.userID;
     const strQry = `
-                  SELECT *
-                  from Products
-                  where prodID = ${userID};
-                  `;
+                SELECT *
+                from Products;
+                `;
     db.query(strQry, (err, results) => {
-      if (err) throw new Error(`Unable to fetch all users`);
+      if (err) throw new Error(`Unable to fetch all products`);
       res.json({
         status: res.statusCode,
-        results: results[0],
+        results,
       });
     });
   } catch (e) {
@@ -127,8 +125,36 @@ function getProduct(req, res) {
   }
 }
 
-function getErrorPage(_req, res) {
-  res.sendFile(path.resolve("./static/html/error.html"));
+function getProduct(req, res) {
+  try {
+    let productID = req.params.prodID;
+    const strQry = `
+                  SELECT *
+                  FROM Products
+                  WHERE prodID = ?;
+                  `;
+    db.query(strQry, [productID], (err, results) => {
+      if (err) {
+        throw new Error("Unable to fetch product");
+      }
+
+      if (results.length === 0) {
+        return res.status(404).json({
+          status: 404,
+          msg: "Product not found",
+        });
+      }
+      res.json({
+        status: res.statusCode,
+        results: results[0],
+      });
+    });
+  } catch (e) {
+    res.status(500).json({
+      status: 500,
+      msg: e.message,
+    });
+  }
 }
 
 function addProduct(req, res) {
@@ -151,42 +177,47 @@ function addProduct(req, res) {
 }
 
 function updateProduct(req, res) {
-    let {  prodID, prodName, prodQuantity, prodPrice, prodURL, userID } = req.body;
-    const productToBeUpdated = req.params.prodID;
-    let strQry = `UPDATE Products
+  let { prodID, prodName, prodQuantity, prodPrice, prodURL, userID } = req.body;
+  const productToBeUpdated = req.params.prodID;
+  let strQry = `UPDATE Products
                   SET prodID = ?, prodName = ?, prodQuantity = ?, prodPrice = ?, prodURL = ?, userID = ?
                   WHERE prodID = ${productToBeUpdated};`;
-    db.query(
-      strQry,
-      [prodID, prodName, prodQuantity, prodPrice, prodURL, userID],
-      (err, results) => {
-        if (err) {
-          return res.status(500).json({ error: "Unable to update product" });
-        }
-        res.json({
-          status: res.statusCode,
-          results: results,
-        });
+  db.query(
+    strQry,
+    [prodID, prodName, prodQuantity, prodPrice, prodURL, userID],
+    (err, results) => {
+      if (err) {
+        return res.status(500).json({ error: "Unable to update product" });
       }
-    );
-  }
+      res.json({
+        status: res.statusCode,
+        results: results,
+      });
+    }
+  );
+}
 
 function deleteProduct(req, res) {
-const productToBeDeleted = req.params.prodID;
-let strQry = `DELETE FROM Products
+  const productToBeDeleted = req.params.prodID;
+  let strQry = `DELETE FROM Products
                 WHERE prodID = ${productToBeDeleted};`;
-db.query(strQry, (err, results) => {
+  db.query(strQry, (err, results) => {
     if (err) {
-    return res.status(500).json({ error: "Unable to delete product" });
+      return res.status(500).json({ error: "Unable to delete product" });
     }
     res.json({
-    status: res.statusCode,
-    results: results,
+      status: res.statusCode,
+      results: results,
     });
-});
+  });
+}
+
+function getErrorPage(_req, res) {
+  res.sendFile(path.resolve("./static/html/error.html"));
 }
 
 export {
+  getHomePage,
   getUsers,
   getUser,
   getErrorPage,

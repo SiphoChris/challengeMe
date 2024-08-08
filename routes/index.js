@@ -1,5 +1,7 @@
 import express from "express";
+import bodyParser from "body-parser";
 import {
+  getHomePage,
   getUsers,
   getUser,
   getErrorPage,
@@ -12,13 +14,15 @@ import {
   updateProduct,
   deleteProduct,
 } from "../controllers/index.js";
-import bodyParser from "body-parser";
 
 const server = express();
 const router = express.Router();
 
 // middleware
 router.use(bodyParser.json());
+
+// homepage end-point: gets the home page
+router.get("/", getHomePage);
 
 // users end-point : gets all users
 router.get("/users", getUsers);
@@ -36,10 +40,10 @@ router.patch("/users/update/:userID", updateUser);
 router.delete("/users/delete/:userID", deleteUser);
 
 // products end-points : get all products
-router.get("^/$|/products", getProducts);
+router.get("/products", getProducts);
 
 // product end-point : gets a product by id
-router.get("/products/:userID", getProduct);
+router.get("/products/:prodID", getProduct);
 
 // product end-point : adds a product
 router.post("/products/add", addProduct);
